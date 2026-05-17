@@ -13,7 +13,30 @@ const formSchema = z.object({
   weightage: z.coerce.number().min(10, "Minimum weightage is 10%").max(100, "Maximum weightage is 100%"),
 });
 
+
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+
+  try {
+    const goals = await prisma.goal.findMany({
+      where: { ownerId: userId },
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(goals);
+  } catch (error) {
+    console.error("Error fetching goals:", error);
+    return NextResponse.json({ message: "Failed to fetch goals." }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
